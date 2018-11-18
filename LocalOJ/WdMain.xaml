@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:LocalOJ"
         mc:Ignorable="d"
-        Title="LocalOJ" Height="450" Width="800" Loaded="Window_Loaded">
+        Title="LocalOJ" Height="594" Width="800" Loaded="Window_Loaded" Drop="Window_Drop" AllowDrop="True">
     <Grid>
         <Button x:Name="BtnPath"  Margin="30,20,0,0" Content="Program Path" HorizontalAlignment="Left" VerticalAlignment="Top" Width="331" Height="25" Click="BtnPath_Click" />
         <ScrollViewer x:Name="scrolls" VerticalScrollBarVisibility="Auto" Margin="30,90,30,30">

@@ -24,14 +24,17 @@ namespace LocalOJ
         TimeOut
     }
 
-
+    
 
     /// <summary>
     /// MainWindow.xaml 的交互逻辑
     /// </summary>
     public partial class WdMain : Window
     {
-        public FileInfo File_exe { get; set; } = new FileInfo(@"C:\Users\117503445\Desktop\build\19.exe");
+        private FileInfo file_exe=new FileInfo(@"C:\Users\117503445\Desktop\SimpleAdd.exe");
+        public FileInfo File_exe { get { return file_exe; } set { file_exe = value;
+                BtnPath.Content = value.FullName;
+            } } 
         private List<TestData> datas;
         public WdMain()
         {
@@ -48,8 +51,9 @@ namespace LocalOJ
             //{
             //    Console.WriteLine($"<{data.ActualOutput}>");
             //}
-
         }
+
+
         private void UpdateGUI(List<TestData> datas)
         {
             foreach (var data in datas)
@@ -79,12 +83,9 @@ namespace LocalOJ
         private string CreateTestJson()
         {
             List<TestData> testDatas = new List<TestData>();
-            TestData t1 = new TestData() { Input = @"5
-1 2 3 4 5 ", ExpectedOutput = "4 2 5 3 1" };//Right
-            TestData t2 = new TestData() { Input = @"8
-1 2 3 4 5 6 7 8 ", ExpectedOutput = "4 2 5 3 1" };//Wrong
-            TestData t3 = new TestData() { Input = @"8
-1 2 3 4 5 ", ExpectedOutput = "4 2 5 3 1" };//TimeOut
+            TestData t1 = new TestData() { Input = @"1 2 ", ExpectedOutput = "3" };//Right
+            TestData t2 = new TestData() { Input = @"1 2 ", ExpectedOutput = "4" };//Wrong
+            TestData t3 = new TestData() { Input = @"1 ", ExpectedOutput = "1" };//TimeOut
             testDatas.Add(t1);
             testDatas.Add(t2);
             testDatas.Add(t3);
@@ -97,13 +98,13 @@ namespace LocalOJ
             {
                 tasks.Add(Execute(File_exe, item.Input));
             }
-            await Task.Delay(3000);
+            await Task.Delay(1000);
             for (int i = 0; i < tasks.Count; i++)
             {
                 if (tasks[i].IsCompleted)
                 {
                     datas[i].ActualOutput = await tasks[i];
-                    if(datas[i].ActualOutput.Trim(new char[] {'\r','\n'})== datas[i].ExpectedOutput)
+                    if(datas[i].ActualOutput.Trim(new char[] {' ','\r','\n'})== datas[i].ExpectedOutput)
                     {
                         datas[i].StatusCode = StatusCodes.Right;
                     }
@@ -150,6 +151,11 @@ namespace LocalOJ
         private void BtnPath_Click(object sender, RoutedEventArgs e)
         {
 
+        }
+
+        private void Window_Drop(object sender, DragEventArgs e)
+        {
+            File_exe = new FileInfo(((string[])e.Data.GetData(DataFormats.FileDrop))[0]);
         }
     }
 }
