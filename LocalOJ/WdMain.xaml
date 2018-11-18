@@ -5,8 +5,19 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:LocalOJ"
         mc:Ignorable="d"
-        Title="WdMain" Height="450" Width="800" Loaded="Window_Loaded">
+        Title="LocalOJ" Height="450" Width="800" Loaded="Window_Loaded">
     <Grid>
-        
+        <Button x:Name="BtnPath"  Margin="30,20,0,0" Content="Program Path" HorizontalAlignment="Left" VerticalAlignment="Top" Width="331" Height="25" Click="BtnPath_Click" />
+        <ScrollViewer x:Name="scrolls" VerticalScrollBarVisibility="Auto" Margin="30,90,30,30">
+            <StackPanel x:Name="StkMain" Orientation="Vertical">
+
+            </StackPanel>
+        </ScrollViewer>
+        <UniformGrid Rows="1" Margin="30,60,30,30" Height="30" VerticalAlignment="Top">
+            <TextBox HorizontalContentAlignment="Center" TextWrapping="Wrap" IsReadOnly="True" VerticalContentAlignment="Center"  >Input</TextBox>
+            <TextBox HorizontalContentAlignment="Center" TextWrapping="Wrap" IsReadOnly="True" VerticalContentAlignment="Center">ExpectedOutput</TextBox>
+            <TextBox HorizontalContentAlignment="Center" TextWrapping="Wrap" IsReadOnly="True" VerticalContentAlignment="Center">ActualOutput</TextBox>
+            <TextBox HorizontalContentAlignment="Center" TextWrapping="Wrap" IsReadOnly="True" VerticalContentAlignment="Center">Status</TextBox>
+        </UniformGrid>
     </Grid>
 </Window>
