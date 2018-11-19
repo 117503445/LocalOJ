@@ -38,7 +38,8 @@ namespace LocalOJ
                 BtnEXEPath.Content = value.FullName;
             }
         }
-        private FileInfo file_test = new FileInfo(App.Path_File + "ExampleProgram.test.txt");
+        private FileSystemWatcher watcher = new FileSystemWatcher() { Path = App.Path_File, NotifyFilter = NotifyFilters.LastWrite, Filter = "ExampleProgram.exe", EnableRaisingEvents = true };
+        private FileInfo file_test = new FileInfo(App.Path_File + "ExampleProgram.json");
         public FileInfo File_test
         {
             get { return file_test; }
@@ -52,12 +53,17 @@ namespace LocalOJ
         public WdMain()
         {
             InitializeComponent();
+
         }
         private async void Window_Loaded(object sender, RoutedEventArgs e)
         {
             BtnEXEPath.Content = File_exe;
             BtnTestPath.Content = File_test;
-            datas = JsonConvert.DeserializeObject<List<TestData>>(CreateTestJson());
+            //string json = CreateTestJson();
+            watcher.Changed += Watcher_Changed;
+
+            string json = LoadJsonFromDisk();
+            datas = JsonConvert.DeserializeObject<List<TestData>>(json);
             await RunTest();
             UpdateGUI(datas);
             //Console.WriteLine("Show");
@@ -65,6 +71,17 @@ namespace LocalOJ
             //{
             //    Console.WriteLine($"<{data.ActualOutput}>");
             //}
+        }
+
+        private void Watcher_Changed(object sender, FileSystemEventArgs e)
+        {
+            Console.WriteLine("Changed");
+        }
+
+        private string LoadJsonFromDisk()
+        {
+            string json = File.ReadAllText(File_test.FullName);
+            return json;
         }
         private void UpdateGUI(List<TestData> datas)
         {
@@ -102,7 +119,7 @@ namespace LocalOJ
             testDatas.Add(t2);
             testDatas.Add(t3);
             string result = JsonConvert.SerializeObject(testDatas);
-            Console.WriteLine(result);
+            //Console.WriteLine(result);
             return result;
         }
         private async Task RunTest()
@@ -132,6 +149,7 @@ namespace LocalOJ
                     datas[i].StatusCode = StatusCodes.TimeOut;
                 }
             }
+            KillProcessExists(File_exe.Name);
         }
         /// <summary>
         /// 调用exe文件
@@ -170,7 +188,7 @@ namespace LocalOJ
                 {
                     File_exe = path;
                 }
-                else if (path.Extension == ".txt")
+                else if (path.Extension == ".json")
                 {
                     File_test = path;
                 }
@@ -189,6 +207,16 @@ namespace LocalOJ
         private void BtnTestPath_Click(object sender, RoutedEventArgs e)
         {
 
+        }
+        private void KillProcessExists(string exe)
+        {
+            Console.WriteLine(exe);
+            Process[] processes = Process.GetProcessesByName(exe);
+            foreach (Process p in processes)
+            {
+                p.Kill();
+                p.Close();
+            }
         }
     }
 }
