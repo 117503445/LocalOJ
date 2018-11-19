@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -6,7 +7,6 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
-
 namespace LocalOJ
 {
     public class TestData
@@ -23,26 +23,40 @@ namespace LocalOJ
         Wrong,
         TimeOut
     }
-
-    
-
     /// <summary>
     /// MainWindow.xaml 的交互逻辑
     /// </summary>
     public partial class WdMain : Window
     {
-        private FileInfo file_exe=new FileInfo(@"C:\Users\117503445\Desktop\SimpleAdd.exe");
-        public FileInfo File_exe { get { return file_exe; } set { file_exe = value;
-                BtnPath.Content = value.FullName;
-            } } 
+        private FileInfo file_exe = new FileInfo(App.Path_File + "ExampleProgram.exe");
+        public FileInfo File_exe
+        {
+            get { return file_exe; }
+            set
+            {
+                file_exe = value;
+                BtnEXEPath.Content = value.FullName;
+            }
+        }
+        private FileInfo file_test = new FileInfo(App.Path_File + "ExampleProgram.test.txt");
+        public FileInfo File_test
+        {
+            get { return file_test; }
+            set
+            {
+                file_test = value;
+                BtnTestPath.Content = value.FullName;
+            }
+        }
         private List<TestData> datas;
         public WdMain()
         {
             InitializeComponent();
         }
-
         private async void Window_Loaded(object sender, RoutedEventArgs e)
         {
+            BtnEXEPath.Content = File_exe;
+            BtnTestPath.Content = File_test;
             datas = JsonConvert.DeserializeObject<List<TestData>>(CreateTestJson());
             await RunTest();
             UpdateGUI(datas);
@@ -52,8 +66,6 @@ namespace LocalOJ
             //    Console.WriteLine($"<{data.ActualOutput}>");
             //}
         }
-
-
         private void UpdateGUI(List<TestData> datas)
         {
             foreach (var data in datas)
@@ -64,8 +76,8 @@ namespace LocalOJ
                 };
                 TextBox tb0 = new TextBox() { TextWrapping = TextWrapping.Wrap, HorizontalContentAlignment = HorizontalAlignment.Center, VerticalContentAlignment = VerticalAlignment.Center, Text = data.Input };
                 TextBox tb1 = new TextBox() { TextWrapping = TextWrapping.Wrap, HorizontalContentAlignment = HorizontalAlignment.Center, VerticalContentAlignment = VerticalAlignment.Center, Text = data.ExpectedOutput };
-                TextBox tb2 = new TextBox() { TextWrapping = TextWrapping.Wrap, HorizontalContentAlignment = HorizontalAlignment.Center, VerticalContentAlignment = VerticalAlignment.Center, Text = data.ActualOutput };
-                TextBox tb3 = new TextBox() { TextWrapping = TextWrapping.Wrap, HorizontalContentAlignment = HorizontalAlignment.Center, VerticalContentAlignment = VerticalAlignment.Center, Text = data.StatusCode.ToString() };
+                TextBox tb2 = new TextBox() { TextWrapping = TextWrapping.Wrap, HorizontalContentAlignment = HorizontalAlignment.Center, VerticalContentAlignment = VerticalAlignment.Center, Text = data.ActualOutput, IsReadOnly = true };
+                TextBox tb3 = new TextBox() { TextWrapping = TextWrapping.Wrap, HorizontalContentAlignment = HorizontalAlignment.Center, VerticalContentAlignment = VerticalAlignment.Center, Text = data.StatusCode.ToString(), IsReadOnly = true };
                 ug.Children.Add(tb0);
                 ug.Children.Add(tb1);
                 ug.Children.Add(tb2);
@@ -73,9 +85,6 @@ namespace LocalOJ
                 StkMain.Children.Add(ug);
             }
         }
-
-
-
         /// <summary>
         /// 创建测试数据
         /// </summary>
@@ -83,13 +92,18 @@ namespace LocalOJ
         private string CreateTestJson()
         {
             List<TestData> testDatas = new List<TestData>();
-            TestData t1 = new TestData() { Input = @"1 2 ", ExpectedOutput = "3" };//Right
-            TestData t2 = new TestData() { Input = @"1 2 ", ExpectedOutput = "4" };//Wrong
-            TestData t3 = new TestData() { Input = @"1 ", ExpectedOutput = "1" };//TimeOut
+            TestData t1 = new TestData() { Input = "Hello World\r\n1 2 ", ExpectedOutput = @"I received <Hello World> ,the length is 11
+3" };//Right
+            TestData t2 = new TestData() { Input = "Hello World\r\n1 2  ", ExpectedOutput = @"I received <Goodbye World> ,the length is 11
+3" };//Wrong
+            TestData t3 = new TestData() { Input = "Hello World\r\n1 2", ExpectedOutput = @"I received <Hello World> ,the length is 11
+3" };//TimeOut
             testDatas.Add(t1);
             testDatas.Add(t2);
             testDatas.Add(t3);
-            return JsonConvert.SerializeObject(testDatas);
+            string result = JsonConvert.SerializeObject(testDatas);
+            Console.WriteLine(result);
+            return result;
         }
         private async Task RunTest()
         {
@@ -104,7 +118,7 @@ namespace LocalOJ
                 if (tasks[i].IsCompleted)
                 {
                     datas[i].ActualOutput = await tasks[i];
-                    if(datas[i].ActualOutput.Trim(new char[] {' ','\r','\n'})== datas[i].ExpectedOutput)
+                    if (datas[i].ActualOutput.Trim(new char[] { ' ', '\r', '\n' }) == datas[i].ExpectedOutput)
                     {
                         datas[i].StatusCode = StatusCodes.Right;
                     }
@@ -147,15 +161,34 @@ namespace LocalOJ
             });
             return output;
         }
+        private void Window_Drop(object sender, DragEventArgs e)
+        {
+            try
+            {
+                FileInfo path = new FileInfo(((string[])e.Data.GetData(DataFormats.FileDrop))[0]);
+                if (path.Extension == ".exe")
+                {
+                    File_exe = path;
+                }
+                else if (path.Extension == ".txt")
+                {
+                    File_test = path;
+                }
+            }
+            catch (Exception)
+            {
 
-        private void BtnPath_Click(object sender, RoutedEventArgs e)
+
+            }
+
+        }
+        private void BtnEXEPath_Click(object sender, RoutedEventArgs e)
         {
 
         }
-
-        private void Window_Drop(object sender, DragEventArgs e)
+        private void BtnTestPath_Click(object sender, RoutedEventArgs e)
         {
-            File_exe = new FileInfo(((string[])e.Data.GetData(DataFormats.FileDrop))[0]);
+
         }
     }
 }

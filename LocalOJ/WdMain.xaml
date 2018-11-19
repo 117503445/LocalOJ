@@ -7,13 +7,14 @@
         mc:Ignorable="d"
         Title="LocalOJ" Height="594" Width="800" Loaded="Window_Loaded" Drop="Window_Drop" AllowDrop="True">
     <Grid>
-        <Button x:Name="BtnPath"  Margin="30,20,0,0" Content="Program Path" HorizontalAlignment="Left" VerticalAlignment="Top" Width="331" Height="25" Click="BtnPath_Click" />
-        <ScrollViewer x:Name="scrolls" VerticalScrollBarVisibility="Auto" Margin="30,90,30,30">
+        <Button x:Name="BtnEXEPath"  Margin="30,20,0,0" Content="Program Path" HorizontalAlignment="Left" VerticalAlignment="Top" Width="500" Height="25" Click="BtnEXEPath_Click"  />
+        <Button x:Name="BtnTestPath"  Margin="30,55,0,0" Content="Test Path" HorizontalAlignment="Left" VerticalAlignment="Top" Width="500" Height="25" Click="BtnTestPath_Click"  />
+        <ScrollViewer x:Name="scrolls" VerticalScrollBarVisibility="Auto" Margin="30,120,30,30">
             <StackPanel x:Name="StkMain" Orientation="Vertical">
 
             </StackPanel>
         </ScrollViewer>
-        <UniformGrid Rows="1" Margin="30,60,30,30" Height="30" VerticalAlignment="Top">
+        <UniformGrid Rows="1" Margin="30,90,30,30" Height="30" VerticalAlignment="Top">
             <TextBox HorizontalContentAlignment="Center" TextWrapping="Wrap" IsReadOnly="True" VerticalContentAlignment="Center"  >Input</TextBox>
             <TextBox HorizontalContentAlignment="Center" TextWrapping="Wrap" IsReadOnly="True" VerticalContentAlignment="Center">ExpectedOutput</TextBox>
             <TextBox HorizontalContentAlignment="Center" TextWrapping="Wrap" IsReadOnly="True" VerticalContentAlignment="Center">ActualOutput</TextBox>
