@@ -38,7 +38,7 @@ namespace LocalOJ
                 BtnEXEPath.Content = value.FullName;
             }
         }
-         
+        private FileSystemWatcher watcher;
         private FileInfo file_test = new FileInfo(App.Path_File + "ExampleProgram.json");
         public FileInfo File_test
         {
@@ -53,19 +53,14 @@ namespace LocalOJ
         public WdMain()
         {
             InitializeComponent();
-            FileSystemWatcher watcher = new FileSystemWatcher()
+            watcher = new FileSystemWatcher()
             {
-                Path = "C:\\User\\Project\\LocalOJ\\LocalOJ\\bin\\Debug\\File\\",
-                NotifyFilter = NotifyFilters.LastAccess | NotifyFilters.LastWrite
-| NotifyFilters.FileName | NotifyFilters.DirectoryName,
-                Filter = ""
+                Path = App.Path_File,
+                NotifyFilter = NotifyFilters.LastWrite,
+                Filter = "*.exe",
+                EnableRaisingEvents = true
             };
             watcher.Changed += Watcher_Changed;
-            watcher.Created += Watcher_Changed;
-            watcher.Deleted += Watcher_Changed;
-            watcher.EnableRaisingEvents = true;
-            watcher.IncludeSubdirectories = true;
-            Console.WriteLine(1);
         }
         private async void Window_Loaded(object sender, RoutedEventArgs e)
         {
@@ -76,24 +71,36 @@ namespace LocalOJ
             string json = LoadJsonFromDisk();
             datas = JsonConvert.DeserializeObject<List<TestData>>(json);
             await RunTest();
-            UpdateGUI(datas);
+            UpdateGUI();
             //Console.WriteLine("Show");
             //foreach (var data in datas)
             //{
             //    Console.WriteLine($"<{data.ActualOutput}>");
             //}
         }
-        private void Watcher_Changed(object sender, FileSystemEventArgs e)
+        private async void Watcher_Changed(object sender, FileSystemEventArgs e)
         {
-            Console.WriteLine("Changed");
+            await Dispatcher.InvokeAsync(async () =>
+            {
+                string json = LoadJsonFromDisk();
+                datas = JsonConvert.DeserializeObject<List<TestData>>(json);
+                await RunTest();
+                UpdateGUI();
+            });
+
         }
         private string LoadJsonFromDisk()
         {
             string json = File.ReadAllText(File_test.FullName);
             return json;
         }
-        private void UpdateGUI(List<TestData> datas)
+        private void UpdateGUI(List<TestData> datas = null)
         {
+            if (datas == null)
+            {
+                datas = this.datas;
+            }
+            StkMain.Children.RemoveRange(0, StkMain.Children.Count);
             foreach (var data in datas)
             {
                 UniformGrid ug = new UniformGrid()
