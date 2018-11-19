@@ -38,7 +38,7 @@ namespace LocalOJ
                 BtnEXEPath.Content = value.FullName;
             }
         }
-        private FileSystemWatcher watcher = new FileSystemWatcher() { Path = App.Path_File, NotifyFilter = NotifyFilters.LastWrite, Filter = "ExampleProgram.exe", EnableRaisingEvents = true };
+         
         private FileInfo file_test = new FileInfo(App.Path_File + "ExampleProgram.json");
         public FileInfo File_test
         {
@@ -53,14 +53,25 @@ namespace LocalOJ
         public WdMain()
         {
             InitializeComponent();
-
+            FileSystemWatcher watcher = new FileSystemWatcher()
+            {
+                Path = "C:\\User\\Project\\LocalOJ\\LocalOJ\\bin\\Debug\\File\\",
+                NotifyFilter = NotifyFilters.LastAccess | NotifyFilters.LastWrite
+| NotifyFilters.FileName | NotifyFilters.DirectoryName,
+                Filter = ""
+            };
+            watcher.Changed += Watcher_Changed;
+            watcher.Created += Watcher_Changed;
+            watcher.Deleted += Watcher_Changed;
+            watcher.EnableRaisingEvents = true;
+            watcher.IncludeSubdirectories = true;
+            Console.WriteLine(1);
         }
         private async void Window_Loaded(object sender, RoutedEventArgs e)
         {
             BtnEXEPath.Content = File_exe;
             BtnTestPath.Content = File_test;
             //string json = CreateTestJson();
-            watcher.Changed += Watcher_Changed;
 
             string json = LoadJsonFromDisk();
             datas = JsonConvert.DeserializeObject<List<TestData>>(json);
@@ -72,12 +83,10 @@ namespace LocalOJ
             //    Console.WriteLine($"<{data.ActualOutput}>");
             //}
         }
-
         private void Watcher_Changed(object sender, FileSystemEventArgs e)
         {
             Console.WriteLine("Changed");
         }
-
         private string LoadJsonFromDisk()
         {
             string json = File.ReadAllText(File_test.FullName);
@@ -125,9 +134,12 @@ namespace LocalOJ
         private async Task RunTest()
         {
             List<Task<string>> tasks = new List<Task<string>>();
+            List<Process> ps = new List<Process>();
             foreach (var item in datas)
             {
-                tasks.Add(Execute(File_exe, item.Input));
+                Process p = new Process();
+                tasks.Add(ExecuteAsync(File_exe, item.Input, p));
+                ps.Add(p);
             }
             await Task.Delay(1000);
             for (int i = 0; i < tasks.Count; i++)
@@ -149,33 +161,43 @@ namespace LocalOJ
                     datas[i].StatusCode = StatusCodes.TimeOut;
                 }
             }
-            KillProcessExists(File_exe.Name);
+            foreach (var item in ps)
+            {
+                try
+                {
+                    item.Kill();
+                    item.Close();
+                }
+                catch (Exception)
+                {
+                }
+            }
         }
         /// <summary>
         /// 调用exe文件
         /// </summary>
+        /// <param name="path"></param>
         /// <param name="input"></param>
+        /// <param name="p"></param>
         /// <returns></returns>
-        private async Task<string> Execute(FileInfo path, string input)
+        private async Task<string> ExecuteAsync(FileInfo path, string input, Process p = null)
         {
+            if (p == null) p = new Process();
             string output = "";
             await Task.Run(() =>
             {
-                using (Process exep = new Process())
-                {
-                    exep.StartInfo.FileName = path.FullName;
-                    exep.StartInfo.RedirectStandardInput = true;   //接受来自调用程序的输入信息
-                    exep.StartInfo.RedirectStandardOutput = true;  //由调用程序获取输出信息
-                    exep.StartInfo.RedirectStandardError = true;   //重定向标准错误输出
-                    exep.StartInfo.CreateNoWindow = true;
-                    exep.StartInfo.UseShellExecute = false;
-                    exep.Start();
-                    exep.StandardInput.Write(input);
-                    exep.StandardInput.AutoFlush = true;
-                    exep.WaitForExit();//关键，等待外部程序退出后才能往下执行
-                    output = exep.StandardOutput.ReadToEnd();
-                    exep.Close();
-                }
+                p.StartInfo.FileName = path.FullName;
+                p.StartInfo.RedirectStandardInput = true;   //接受来自调用程序的输入信息
+                p.StartInfo.RedirectStandardOutput = true;  //由调用程序获取输出信息
+                p.StartInfo.RedirectStandardError = true;   //重定向标准错误输出
+                p.StartInfo.CreateNoWindow = true;
+                p.StartInfo.UseShellExecute = false;
+                p.Start();
+                p.StandardInput.Write(input);
+                p.StandardInput.AutoFlush = true;
+                p.WaitForExit();//关键，等待外部程序退出后才能往下执行
+                output = p.StandardOutput.ReadToEnd();
+                p.Close();
             });
             return output;
         }
@@ -195,10 +217,7 @@ namespace LocalOJ
             }
             catch (Exception)
             {
-
-
             }
-
         }
         private void BtnEXEPath_Click(object sender, RoutedEventArgs e)
         {
@@ -207,16 +226,6 @@ namespace LocalOJ
         private void BtnTestPath_Click(object sender, RoutedEventArgs e)
         {
 
-        }
-        private void KillProcessExists(string exe)
-        {
-            Console.WriteLine(exe);
-            Process[] processes = Process.GetProcessesByName(exe);
-            foreach (Process p in processes)
-            {
-                p.Kill();
-                p.Close();
-            }
         }
     }
 }
