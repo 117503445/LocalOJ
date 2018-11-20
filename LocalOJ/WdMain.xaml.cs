@@ -47,6 +47,8 @@ namespace LocalOJ
             {
                 file_test = value;
                 BtnTestPath.Content = value.FullName;
+                string json = LoadJsonFromDisk();
+                datas = JsonConvert.DeserializeObject<List<TestData>>(json);
             }
         }
         private List<TestData> datas;
