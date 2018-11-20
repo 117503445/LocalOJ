@@ -80,13 +80,17 @@ namespace LocalOJ
         }
         private async void Watcher_Changed(object sender, FileSystemEventArgs e)
         {
-            await Dispatcher.InvokeAsync(async () =>
+
+            string json = LoadJsonFromDisk();
+            datas = JsonConvert.DeserializeObject<List<TestData>>(json);
+            await RunTest();
+            UpdateGUI();
+            await Dispatcher.InvokeAsync(() =>
             {
-                string json = LoadJsonFromDisk();
-                datas = JsonConvert.DeserializeObject<List<TestData>>(json);
-                await RunTest();
-                UpdateGUI();
+                Topmost = true;
+                Topmost = false;
             });
+
 
         }
         private string LoadJsonFromDisk()
@@ -96,27 +100,33 @@ namespace LocalOJ
         }
         private void UpdateGUI(List<TestData> datas = null)
         {
-            if (datas == null)
-            {
-                datas = this.datas;
-            }
-            StkMain.Children.RemoveRange(0, StkMain.Children.Count);
-            foreach (var data in datas)
-            {
-                UniformGrid ug = new UniformGrid()
-                {
-                    Rows = 1
-                };
-                TextBox tb0 = new TextBox() { TextWrapping = TextWrapping.Wrap, HorizontalContentAlignment = HorizontalAlignment.Center, VerticalContentAlignment = VerticalAlignment.Center, Text = data.Input };
-                TextBox tb1 = new TextBox() { TextWrapping = TextWrapping.Wrap, HorizontalContentAlignment = HorizontalAlignment.Center, VerticalContentAlignment = VerticalAlignment.Center, Text = data.ExpectedOutput };
-                TextBox tb2 = new TextBox() { TextWrapping = TextWrapping.Wrap, HorizontalContentAlignment = HorizontalAlignment.Center, VerticalContentAlignment = VerticalAlignment.Center, Text = data.ActualOutput, IsReadOnly = true };
-                TextBox tb3 = new TextBox() { TextWrapping = TextWrapping.Wrap, HorizontalContentAlignment = HorizontalAlignment.Center, VerticalContentAlignment = VerticalAlignment.Center, Text = data.StatusCode.ToString(), IsReadOnly = true };
-                ug.Children.Add(tb0);
-                ug.Children.Add(tb1);
-                ug.Children.Add(tb2);
-                ug.Children.Add(tb3);
-                StkMain.Children.Add(ug);
-            }
+            Dispatcher.InvokeAsync(() =>
+           {
+               if (datas == null)
+               {
+                   datas = this.datas;
+               }
+               StkMain.Children.RemoveRange(0, StkMain.Children.Count);
+               foreach (var data in datas)
+               {
+                   UniformGrid ug = new UniformGrid()
+                   {
+                       Rows = 1
+                   };
+                   TextBox tb0 = new TextBox() { TextWrapping = TextWrapping.Wrap, HorizontalContentAlignment = HorizontalAlignment.Center, VerticalContentAlignment = VerticalAlignment.Center, Text = data.Input };
+                   TextBox tb1 = new TextBox() { TextWrapping = TextWrapping.Wrap, HorizontalContentAlignment = HorizontalAlignment.Center, VerticalContentAlignment = VerticalAlignment.Center, Text = data.ExpectedOutput };
+                   TextBox tb2 = new TextBox() { TextWrapping = TextWrapping.Wrap, HorizontalContentAlignment = HorizontalAlignment.Center, VerticalContentAlignment = VerticalAlignment.Center, Text = data.ActualOutput, IsReadOnly = true };
+                   TextBox tb3 = new TextBox() { TextWrapping = TextWrapping.Wrap, HorizontalContentAlignment = HorizontalAlignment.Center, VerticalContentAlignment = VerticalAlignment.Center, Text = data.StatusCode.ToString(), IsReadOnly = true };
+                   ug.Children.Add(tb0);
+                   ug.Children.Add(tb1);
+                   ug.Children.Add(tb2);
+                   ug.Children.Add(tb3);
+                   StkMain.Children.Add(ug);
+               }
+           });
+
+
+
         }
         /// <summary>
         /// 创建测试数据
