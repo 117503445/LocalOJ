@@ -240,11 +240,25 @@ namespace LocalOJ
         }
         private void BtnEXEPath_Click(object sender, RoutedEventArgs e)
         {
-
+            Microsoft.Win32.OpenFileDialog dialog = new Microsoft.Win32.OpenFileDialog
+            {
+                Filter = "可执行文件|*.exe"
+            };
+            if (dialog.ShowDialog() == true)
+            {
+                File_exe = new FileInfo(dialog.FileName);
+            }
         }
         private void BtnTestPath_Click(object sender, RoutedEventArgs e)
         {
-
+            Microsoft.Win32.OpenFileDialog dialog = new Microsoft.Win32.OpenFileDialog
+            {
+                Filter = "测试数据文件|*.json"
+            };
+            if (dialog.ShowDialog() == true)
+            {
+                File_test = new FileInfo(dialog.FileName);
+            }
         }
     }
 }
