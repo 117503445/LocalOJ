@@ -34,6 +34,7 @@ namespace LocalOJ
             get { return file_exe; }
             set
             {
+                watcher.Path = value.Directory.FullName;
                 file_exe = value;
                 BtnEXEPath.Content = value.FullName;
             }
