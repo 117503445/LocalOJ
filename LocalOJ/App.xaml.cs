@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Windows;
-
 namespace LocalOJ
 {
     /// <summary>
@@ -10,5 +9,10 @@ namespace LocalOJ
     {
         public static string Path_root { get; } = AppDomain.CurrentDomain.BaseDirectory;
         public static string Path_File { get; } = Path_root + @"File\";
+
+        private void Application_Startup(object sender, StartupEventArgs e)
+        {
+            TLib.Software.WPF_ExpectionHandler.HandleExpection(Current, AppDomain.CurrentDomain);
+        }
     }
 }

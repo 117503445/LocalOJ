@@ -16,6 +16,9 @@ namespace LocalOJ
     public partial class WdMain : Window
     {
         private FileInfo file_exe = new FileInfo(App.Path_File + "ExampleProgram.exe");
+        /// <summary>
+        /// exe文件的路径
+        /// </summary>
         public FileInfo File_exe
         {
             get { return file_exe; }
@@ -28,6 +31,9 @@ namespace LocalOJ
             }
         }
         private FileInfo file_test = new FileInfo(App.Path_File + "ExampleProgram.json");
+        /// <summary>
+        /// json测试文件的路径
+        /// </summary>
         public FileInfo File_test
         {
             get { return file_test; }
@@ -36,18 +42,21 @@ namespace LocalOJ
                 //Console.WriteLine("Set Start");
                 file_test = value;
                 BtnTestPath.Content = value.FullName;
-                string json = LoadJsonFromDisk();
+                string json = DiskToDatas();
                 datas = JsonConvert.DeserializeObject<List<TestData>>(json);
                 Task.Run(async () =>
                 {
                     await RunTestAsync();
                     //Console.WriteLine("Run Finished");
-                    DataToGUI();
+                    DatasToGUI();
                     //Console.WriteLine("Update Finished");
                 });
                 //Console.WriteLine("Set Finish");
             }
         }
+        /// <summary>
+        /// 储存测试数据信息
+        /// </summary>
         private List<TestData> datas;
         /// <summary>
         /// 监视exe文件
@@ -71,23 +80,28 @@ namespace LocalOJ
             BtnTestPath.Content = File_test;
             //string json = CreateTestJson();
 
-            string json = LoadJsonFromDisk();
+            string json = DiskToDatas();
             datas = JsonConvert.DeserializeObject<List<TestData>>(json);
             await RunTestAsync();
-            DataToGUI();
+            DatasToGUI();
             //Console.WriteLine("Show");
             //foreach (var data in datas)
             //{
             //    Console.WriteLine($"<{data.ActualOutput}>");
             //}
         }
+        /// <summary>
+        /// exe被编译
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private async void Watcher_Changed(object sender, FileSystemEventArgs e)
         {
 
-            string json = LoadJsonFromDisk();
+            string json = DiskToDatas();
             datas = JsonConvert.DeserializeObject<List<TestData>>(json);
             await RunTestAsync();
-            DataToGUI();
+            DatasToGUI();
             await Dispatcher.InvokeAsync(() =>
             {
                 Topmost = true;
@@ -96,62 +110,103 @@ namespace LocalOJ
 
 
         }
-        private string LoadJsonFromDisk()
+        /// <summary>
+        /// 失去焦点时保存更改
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private async void TextBox_LostFocus(object sender, RoutedEventArgs e)
         {
-            if (!File.Exists(File_test.FullName)) { File.Create(File_test.FullName); }
-            string json = File.ReadAllText(File_test.FullName);
-            return json;
+            GUIToDatas();
+            DatasToDisk();
+            await RunTestAsync();
+            DatasToGUI();
         }
-        private void SaveJsonToDisk()
+        /// <summary>
+        /// 把文件路径拖入应用窗口
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void Window_Drop(object sender, DragEventArgs e)
         {
-            if (datas != null)
+            try
             {
-                string json = JsonConvert.SerializeObject(datas);
-                File.WriteAllText(File_test.FullName, json);
+                FileInfo path = new FileInfo(((string[])e.Data.GetData(DataFormats.FileDrop))[0]);
+                if (path.Extension == ".exe")
+                {
+                    File_exe = path;
+                }
+                else if (path.Extension == ".json")
+                {
+                    File_test = path;
+                }
+            }
+            catch (Exception)
+            {
             }
         }
+        /// <summary>
+        /// 撤回数据
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void BtnUndo_Click(object sender, RoutedEventArgs e)
+        {
+            if (lastDatas != null)
+            {
+                datas = lastDatas;
+                DatasToGUI();
+                DatasToDisk();
+            }
+        }
+        private void BtnEXEPath_Click(object sender, RoutedEventArgs e)
+        {
+            Microsoft.Win32.OpenFileDialog dialog = new Microsoft.Win32.OpenFileDialog
+            {
+                Filter = "可执行文件|*.exe"
+            };
+            if (dialog.ShowDialog() == true)
+            {
+                File_exe = new FileInfo(dialog.FileName);
+            }
+        }
+        private void BtnTestPath_Click(object sender, RoutedEventArgs e)
+        {
+            Microsoft.Win32.OpenFileDialog dialog = new Microsoft.Win32.OpenFileDialog
+            {
+                Filter = "测试数据文件|*.json"
+            };
+            if (dialog.ShowDialog() == true)
+            {
+                File_test = new FileInfo(dialog.FileName);
+            }
+        }
+        /// <summary>
+        /// 增加数据
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void BtnAdd_Click(object sender, RoutedEventArgs e)
+        {
+            datas.Add(new TestData());
+            DatasToDisk();
+            DatasToGUI();
+        }
+        /// <summary>
+        /// 删除某一测试数据
+        /// </summary>
+        /// <param name="index"></param>
         private void DeleteData(int index)
         {
-            datas.RemoveAt(index);
-            SaveJsonToDisk();
-            DataToGUI();
-        }
-        private void DataToGUI(List<TestData> datas = null)
-        {
-            Dispatcher.InvokeAsync(() =>
-           {
-               if (datas == null)
-               {
-                   datas = this.datas;
-               }
-               StkMain.Children.RemoveRange(0, StkMain.Children.Count);
-               for (int i = 0; i < datas.Count; i++)
-               {
-                   UniformGrid ug = new UniformGrid()
-                   {
-                       Rows = 1,
-                       Tag = i
-                   };
-                   ug.MouseRightButtonUp += (s, e) =>
-                   {
-                       if (s is UniformGrid u)
-                       {
-                           DeleteData((int)u.Tag);
-                       }
-                   };
+            lastDatas = new List<TestData>();
+            foreach (var data in datas)
 
-                   TextBox tb0 = new TextBox() { TextWrapping = TextWrapping.Wrap, HorizontalContentAlignment = HorizontalAlignment.Center, VerticalContentAlignment = VerticalAlignment.Center, Text = datas[i].Input };
-                   TextBox tb1 = new TextBox() { TextWrapping = TextWrapping.Wrap, HorizontalContentAlignment = HorizontalAlignment.Center, VerticalContentAlignment = VerticalAlignment.Center, Text = datas[i].ExpectedOutput };
-                   TextBox tb2 = new TextBox() { TextWrapping = TextWrapping.Wrap, HorizontalContentAlignment = HorizontalAlignment.Center, VerticalContentAlignment = VerticalAlignment.Center, Text = datas[i].ActualOutput, IsReadOnly = true };
-                   TextBox tb3 = new TextBox() { TextWrapping = TextWrapping.Wrap, HorizontalContentAlignment = HorizontalAlignment.Center, VerticalContentAlignment = VerticalAlignment.Center, Text = datas[i].StatusCode.ToString(), IsReadOnly = true };
-                   tb0.LostFocus += TextBox_LostFocus; tb1.LostFocus += TextBox_LostFocus;
-                   ug.Children.Add(tb0);
-                   ug.Children.Add(tb1);
-                   ug.Children.Add(tb2);
-                   ug.Children.Add(tb3);
-                   StkMain.Children.Add(ug);
-               }
-           });
+            {
+                lastDatas.Add(data);
+            }
+            datas.RemoveAt(index);
+            DatasToDisk();
+            DatasToGUI();
         }
         /// <summary>
         /// 创建测试数据
@@ -173,13 +228,7 @@ namespace LocalOJ
             //Console.WriteLine(result);
             return result;
         }
-        private async void TextBox_LostFocus(object sender, RoutedEventArgs e)
-        {
-            GUIToDatas();
-            SaveJsonToDisk();
-            await RunTestAsync();
-            DataToGUI();
-        }
+
         private void GUIToDatas()
         {
             datas.Clear();
@@ -193,8 +242,59 @@ namespace LocalOJ
                 datas.Add(data);
             }
         }
+        private void DatasToGUI(List<TestData> datas = null)
+        {
+            Dispatcher.InvokeAsync(() =>
+            {
+                if (datas == null)
+                {
+                    datas = this.datas;
+                }
+                StkMain.Children.RemoveRange(0, StkMain.Children.Count);
+                for (int i = 0; i < datas.Count; i++)
+                {
+                    UniformGrid ug = new UniformGrid()
+                    {
+                        Rows = 1,
+                        Tag = i
+                    };
+                    ug.MouseRightButtonUp += (s, e) =>
+                    {
+                        if (s is UniformGrid u)
+                        {
+                            DeleteData((int)u.Tag);
+                        }
+                    };
+
+                    TextBox tb0 = new TextBox() { TextWrapping = TextWrapping.Wrap, HorizontalContentAlignment = HorizontalAlignment.Center, VerticalContentAlignment = VerticalAlignment.Center, Text = datas[i].Input };
+                    TextBox tb1 = new TextBox() { TextWrapping = TextWrapping.Wrap, HorizontalContentAlignment = HorizontalAlignment.Center, VerticalContentAlignment = VerticalAlignment.Center, Text = datas[i].ExpectedOutput };
+                    TextBox tb2 = new TextBox() { TextWrapping = TextWrapping.Wrap, HorizontalContentAlignment = HorizontalAlignment.Center, VerticalContentAlignment = VerticalAlignment.Center, Text = datas[i].ActualOutput, IsReadOnly = true };
+                    TextBox tb3 = new TextBox() { TextWrapping = TextWrapping.Wrap, HorizontalContentAlignment = HorizontalAlignment.Center, VerticalContentAlignment = VerticalAlignment.Center, Text = datas[i].StatusCode.ToString(), IsReadOnly = true };
+                    tb0.LostFocus += TextBox_LostFocus; tb1.LostFocus += TextBox_LostFocus;
+                    ug.Children.Add(tb0);
+                    ug.Children.Add(tb1);
+                    ug.Children.Add(tb2);
+                    ug.Children.Add(tb3);
+                    StkMain.Children.Add(ug);
+                }
+            });
+        }
+        private string DiskToDatas()
+        {
+            if (!File.Exists(File_test.FullName)) { File.Create(File_test.FullName); }
+            string json = File.ReadAllText(File_test.FullName);
+            return json;
+        }
+        private void DatasToDisk()
+        {
+            if (datas != null)
+            {
+                string json = JsonConvert.SerializeObject(datas);
+                File.WriteAllText(File_test.FullName, json);
+            }
+        }
         /// <summary>
-        /// 运行测试
+        /// 运行所有测试
         /// </summary>
         /// <returns></returns>
         private async Task RunTestAsync()
@@ -274,57 +374,9 @@ namespace LocalOJ
             });
             return output;
         }
-        private void Window_Drop(object sender, DragEventArgs e)
-        {
-            try
-            {
-                FileInfo path = new FileInfo(((string[])e.Data.GetData(DataFormats.FileDrop))[0]);
-                if (path.Extension == ".exe")
-                {
-                    File_exe = path;
-                }
-                else if (path.Extension == ".json")
-                {
-                    File_test = path;
-                }
-            }
-            catch (Exception)
-            {
-            }
-        }
-        private void BtnEXEPath_Click(object sender, RoutedEventArgs e)
-        {
-            Microsoft.Win32.OpenFileDialog dialog = new Microsoft.Win32.OpenFileDialog
-            {
-                Filter = "可执行文件|*.exe"
-            };
-            if (dialog.ShowDialog() == true)
-            {
-                File_exe = new FileInfo(dialog.FileName);
-            }
-        }
-        private void BtnTestPath_Click(object sender, RoutedEventArgs e)
-        {
-            Microsoft.Win32.OpenFileDialog dialog = new Microsoft.Win32.OpenFileDialog
-            {
-                Filter = "测试数据文件|*.json"
-            };
-            if (dialog.ShowDialog() == true)
-            {
-                File_test = new FileInfo(dialog.FileName);
-            }
-        }
-        private void BtnAdd_Click(object sender, RoutedEventArgs e)
-        {
-            datas.Add(new TestData());
-            SaveJsonToDisk();
-            DataToGUI();
-        }
-        private void BtnDelete_Click(object sender, RoutedEventArgs e)
-        {
-
-        }
-
-
+/// <summary>
+/// 用于撤回,储存上一次datas的状态
+/// </summary>
+        private List<TestData> lastDatas = null;
     }
 }
