@@ -9,20 +9,7 @@ using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 namespace LocalOJ
 {
-    public class TestData
-    {
-        public string Input { get; set; }
-        public string ExpectedOutput { get; set; }
-        public string ActualOutput { get; set; }
-        public StatusCodes StatusCode { get; set; }
-    }
-    public enum StatusCodes
-    {
-        UnTested,
-        Right,
-        Wrong,
-        TimeOut
-    }
+
     /// <summary>
     /// MainWindow.xaml 的交互逻辑
     /// </summary>
@@ -37,22 +24,35 @@ namespace LocalOJ
                 watcher.Path = value.Directory.FullName;
                 file_exe = value;
                 BtnEXEPath.Content = value.FullName;
+                File_test = new FileInfo(value.Directory.FullName + "\\" + Path.GetFileNameWithoutExtension(value.Name) + ".json");
             }
         }
-        private FileSystemWatcher watcher;
         private FileInfo file_test = new FileInfo(App.Path_File + "ExampleProgram.json");
         public FileInfo File_test
         {
             get { return file_test; }
             set
             {
+                //Console.WriteLine("Set Start");
                 file_test = value;
                 BtnTestPath.Content = value.FullName;
                 string json = LoadJsonFromDisk();
                 datas = JsonConvert.DeserializeObject<List<TestData>>(json);
+                Task.Run(async () =>
+                {
+                    await RunTestAsync();
+                    //Console.WriteLine("Run Finished");
+                    DataToGUI();
+                    //Console.WriteLine("Update Finished");
+                });
+                //Console.WriteLine("Set Finish");
             }
         }
         private List<TestData> datas;
+        /// <summary>
+        /// 监视exe文件
+        /// </summary>
+        private FileSystemWatcher watcher;
         public WdMain()
         {
             InitializeComponent();
@@ -73,8 +73,8 @@ namespace LocalOJ
 
             string json = LoadJsonFromDisk();
             datas = JsonConvert.DeserializeObject<List<TestData>>(json);
-            await RunTest();
-            UpdateGUI();
+            await RunTestAsync();
+            DataToGUI();
             //Console.WriteLine("Show");
             //foreach (var data in datas)
             //{
@@ -86,8 +86,8 @@ namespace LocalOJ
 
             string json = LoadJsonFromDisk();
             datas = JsonConvert.DeserializeObject<List<TestData>>(json);
-            await RunTest();
-            UpdateGUI();
+            await RunTestAsync();
+            DataToGUI();
             await Dispatcher.InvokeAsync(() =>
             {
                 Topmost = true;
@@ -98,10 +98,25 @@ namespace LocalOJ
         }
         private string LoadJsonFromDisk()
         {
+            if (!File.Exists(File_test.FullName)) { File.Create(File_test.FullName); }
             string json = File.ReadAllText(File_test.FullName);
             return json;
         }
-        private void UpdateGUI(List<TestData> datas = null)
+        private void SaveJsonToDisk()
+        {
+            if (datas != null)
+            {
+                string json = JsonConvert.SerializeObject(datas);
+                File.WriteAllText(File_test.FullName, json);
+            }
+        }
+        private void DeleteData(int index)
+        {
+            datas.RemoveAt(index);
+            SaveJsonToDisk();
+            DataToGUI();
+        }
+        private void DataToGUI(List<TestData> datas = null)
         {
             Dispatcher.InvokeAsync(() =>
            {
@@ -110,16 +125,26 @@ namespace LocalOJ
                    datas = this.datas;
                }
                StkMain.Children.RemoveRange(0, StkMain.Children.Count);
-               foreach (var data in datas)
+               for (int i = 0; i < datas.Count; i++)
                {
                    UniformGrid ug = new UniformGrid()
                    {
-                       Rows = 1
+                       Rows = 1,
+                       Tag = i
                    };
-                   TextBox tb0 = new TextBox() { TextWrapping = TextWrapping.Wrap, HorizontalContentAlignment = HorizontalAlignment.Center, VerticalContentAlignment = VerticalAlignment.Center, Text = data.Input };
-                   TextBox tb1 = new TextBox() { TextWrapping = TextWrapping.Wrap, HorizontalContentAlignment = HorizontalAlignment.Center, VerticalContentAlignment = VerticalAlignment.Center, Text = data.ExpectedOutput };
-                   TextBox tb2 = new TextBox() { TextWrapping = TextWrapping.Wrap, HorizontalContentAlignment = HorizontalAlignment.Center, VerticalContentAlignment = VerticalAlignment.Center, Text = data.ActualOutput, IsReadOnly = true };
-                   TextBox tb3 = new TextBox() { TextWrapping = TextWrapping.Wrap, HorizontalContentAlignment = HorizontalAlignment.Center, VerticalContentAlignment = VerticalAlignment.Center, Text = data.StatusCode.ToString(), IsReadOnly = true };
+                   ug.MouseRightButtonUp += (s, e) =>
+                   {
+                       if (s is UniformGrid u)
+                       {
+                           DeleteData((int)u.Tag);
+                       }
+                   };
+
+                   TextBox tb0 = new TextBox() { TextWrapping = TextWrapping.Wrap, HorizontalContentAlignment = HorizontalAlignment.Center, VerticalContentAlignment = VerticalAlignment.Center, Text = datas[i].Input };
+                   TextBox tb1 = new TextBox() { TextWrapping = TextWrapping.Wrap, HorizontalContentAlignment = HorizontalAlignment.Center, VerticalContentAlignment = VerticalAlignment.Center, Text = datas[i].ExpectedOutput };
+                   TextBox tb2 = new TextBox() { TextWrapping = TextWrapping.Wrap, HorizontalContentAlignment = HorizontalAlignment.Center, VerticalContentAlignment = VerticalAlignment.Center, Text = datas[i].ActualOutput, IsReadOnly = true };
+                   TextBox tb3 = new TextBox() { TextWrapping = TextWrapping.Wrap, HorizontalContentAlignment = HorizontalAlignment.Center, VerticalContentAlignment = VerticalAlignment.Center, Text = datas[i].StatusCode.ToString(), IsReadOnly = true };
+                   tb0.LostFocus += TextBox_LostFocus; tb1.LostFocus += TextBox_LostFocus;
                    ug.Children.Add(tb0);
                    ug.Children.Add(tb1);
                    ug.Children.Add(tb2);
@@ -127,9 +152,6 @@ namespace LocalOJ
                    StkMain.Children.Add(ug);
                }
            });
-
-
-
         }
         /// <summary>
         /// 创建测试数据
@@ -151,8 +173,37 @@ namespace LocalOJ
             //Console.WriteLine(result);
             return result;
         }
-        private async Task RunTest()
+        private async void TextBox_LostFocus(object sender, RoutedEventArgs e)
         {
+            GUIToDatas();
+            SaveJsonToDisk();
+            await RunTestAsync();
+            DataToGUI();
+        }
+        private void GUIToDatas()
+        {
+            datas.Clear();
+
+            foreach (var ugs in StkMain.Children)
+            {
+                TestData data = new TestData(); UniformGrid ug = (UniformGrid)ugs;
+                data.Input = ((TextBox)ug.Children[0]).Text;
+                data.ExpectedOutput = ((TextBox)ug.Children[1]).Text;
+                data.ActualOutput = ((TextBox)ug.Children[2]).Text;
+                datas.Add(data);
+            }
+        }
+        /// <summary>
+        /// 运行测试
+        /// </summary>
+        /// <returns></returns>
+        private async Task RunTestAsync()
+        {
+            //Console.WriteLine("RunTest");
+            if (datas == null)
+            {
+                return;
+            }
             List<Task<string>> tasks = new List<Task<string>>();
             List<Process> ps = new List<Process>();
             foreach (var item in datas)
@@ -181,17 +232,19 @@ namespace LocalOJ
                     datas[i].StatusCode = StatusCodes.TimeOut;
                 }
             }
-            foreach (var item in ps)
+            foreach (var p in ps)//试图关闭超时线程
             {
                 try
                 {
-                    item.Kill();
-                    item.Close();
+                    p.Kill();
+                    p.Close();
                 }
                 catch (Exception)
                 {
                 }
             }
+            string s = DateTime.Now.ToLocalTime().ToString("MM/dd HH:mm:ss");
+            TbkTestTime.Text = $"Last test time : {s}";
         }
         /// <summary>
         /// 调用exe文件
@@ -261,5 +314,17 @@ namespace LocalOJ
                 File_test = new FileInfo(dialog.FileName);
             }
         }
+        private void BtnAdd_Click(object sender, RoutedEventArgs e)
+        {
+            datas.Add(new TestData());
+            SaveJsonToDisk();
+            DataToGUI();
+        }
+        private void BtnDelete_Click(object sender, RoutedEventArgs e)
+        {
+
+        }
+
+
     }
 }

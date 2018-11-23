@@ -9,6 +9,9 @@
     <Grid>
         <Button x:Name="BtnEXEPath"  Margin="30,20,0,0" Content="Program Path" HorizontalAlignment="Left" VerticalAlignment="Top" Width="500" Height="25" Click="BtnEXEPath_Click"  />
         <Button x:Name="BtnTestPath"  Margin="30,55,0,0" Content="Test Path" HorizontalAlignment="Left" VerticalAlignment="Top" Width="500" Height="25" Click="BtnTestPath_Click"  />
+        <Button Name="BtnAdd" Margin="580,20,0,0" Width="25" Height="25" Content="+"  HorizontalAlignment="Left" VerticalAlignment="Top" Click="BtnAdd_Click"></Button>
+        <Button Name="BtnDelete" Margin="620,20,0,0" Width="25" Height="25" Content="撤"  HorizontalAlignment="Left" VerticalAlignment="Top" Click="BtnDelete_Click"></Button>
+        <TextBlock Name="TbkTestTime" Margin="580,60,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Text="Last test time : never tested"></TextBlock>
         <ScrollViewer x:Name="scrolls" VerticalScrollBarVisibility="Auto" Margin="30,120,30,30">
             <StackPanel x:Name="StkMain" Orientation="Vertical">
 
