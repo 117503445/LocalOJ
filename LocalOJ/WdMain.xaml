@@ -5,12 +5,24 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:LocalOJ"
         mc:Ignorable="d"
-        Title="LocalOJ" Height="594" Width="800" Loaded="Window_Loaded" Drop="Window_Drop" AllowDrop="True">
+        Title="LocalOJ" Height="594" Width="800" Loaded="Window_Loaded" Drop="Window_Drop" AllowDrop="True"
+        
+        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+        TextElement.Foreground="{DynamicResource MaterialDesignBody}"
+        TextElement.FontWeight="Regular"
+        TextElement.FontSize="13"
+        TextOptions.TextFormattingMode="Ideal" 
+        TextOptions.TextRenderingMode="Auto"        
+        Background="{DynamicResource MaterialDesignPaper}"
+        FontFamily="{DynamicResource MaterialDesignFont}"
+        
+        
+        >
     <Grid>
         <Button x:Name="BtnEXEPath"  Margin="30,20,0,0" Content="Program Path" HorizontalAlignment="Left" VerticalAlignment="Top" Width="500" Height="25" Click="BtnEXEPath_Click"  />
         <Button x:Name="BtnTestPath"  Margin="30,55,0,0" Content="Test Path" HorizontalAlignment="Left" VerticalAlignment="Top" Width="500" Height="25" Click="BtnTestPath_Click"  />
-        <Button Name="BtnAdd" Margin="580,20,0,0" Width="25" Height="25" Content="+"  HorizontalAlignment="Left" VerticalAlignment="Top" Click="BtnAdd_Click"></Button>
-        <Button Name="BtnUndo" Margin="620,20,0,0" Width="25" Height="25" Content="撤"  HorizontalAlignment="Left" VerticalAlignment="Top" Click="BtnUndo_Click"></Button>
+        <Button Name="BtnAdd" Margin="580,15,0,0" Width="70" Height="35" Content="Add"  HorizontalAlignment="Left" VerticalAlignment="Top" Click="BtnAdd_Click" ></Button>
+        <Button Name="BtnUndo" Margin="667,15,0,0" Width="70" Height="35" Content="Undo"  HorizontalAlignment="Left" VerticalAlignment="Top" Click="BtnUndo_Click"></Button>
         <TextBlock Name="TbkTestTime" Margin="580,60,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Text="Last test time : never tested"></TextBlock>
         <ScrollViewer x:Name="scrolls" VerticalScrollBarVisibility="Auto" Margin="30,120,30,30">
             <StackPanel x:Name="StkMain" Orientation="Vertical">
