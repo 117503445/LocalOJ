@@ -42,10 +42,10 @@ namespace LocalOJ
                 //Console.WriteLine("Set Start");
                 file_test = value;
                 BtnTestPath.Content = value.FullName;
-                string json = DiskToDatas();
-                datas = JsonConvert.DeserializeObject<List<TestData>>(json);
+                DiskToDatas();
                 Task.Run(async () =>
                 {
+                    DatasToGUI();
                     await RunTestAsync();
                     //Console.WriteLine("Run Finished");
                     DatasToGUI();
@@ -80,8 +80,8 @@ namespace LocalOJ
             BtnTestPath.Content = File_test;
             //string json = CreateTestJson();
 
-            string json = DiskToDatas();
-            datas = JsonConvert.DeserializeObject<List<TestData>>(json);
+            DiskToDatas();
+            DatasToGUI();
             await RunTestAsync();
             DatasToGUI();
             //Console.WriteLine("Show");
@@ -98,8 +98,8 @@ namespace LocalOJ
         private async void Watcher_Changed(object sender, FileSystemEventArgs e)
         {
 
-            string json = DiskToDatas();
-            datas = JsonConvert.DeserializeObject<List<TestData>>(json);
+            DiskToDatas();
+
             await RunTestAsync();
             DatasToGUI();
             await Dispatcher.InvokeAsync(() =>
@@ -129,6 +129,7 @@ namespace LocalOJ
         /// <param name="e"></param>
         private void Window_Drop(object sender, DragEventArgs e)
         {
+            //Console.WriteLine("Drag");
             try
             {
                 FileInfo path = new FileInfo(((string[])e.Data.GetData(DataFormats.FileDrop))[0]);
@@ -231,6 +232,7 @@ namespace LocalOJ
 
         private void GUIToDatas()
         {
+            //Console.WriteLine("GUIToDatas Start");
             datas.Clear();
 
             foreach (var ugs in StkMain.Children)
@@ -241,15 +243,13 @@ namespace LocalOJ
                 data.ActualOutput = ((TextBox)ug.Children[2]).Text;
                 datas.Add(data);
             }
+            //Console.WriteLine("GUIToDatas End");
         }
-        private void DatasToGUI(List<TestData> datas = null)
+        private void DatasToGUI()
         {
+            //Console.WriteLine("DatasToGUI Start");
             Dispatcher.InvokeAsync(() =>
             {
-                if (datas == null)
-                {
-                    datas = this.datas;
-                }
                 StkMain.Children.RemoveRange(0, StkMain.Children.Count);
                 for (int i = 0; i < datas.Count; i++)
                 {
@@ -278,20 +278,32 @@ namespace LocalOJ
                     StkMain.Children.Add(ug);
                 }
             });
+            //Console.WriteLine("DatasToGUI End");
         }
-        private string DiskToDatas()
+        private void DiskToDatas()
         {
-            if (!File.Exists(File_test.FullName)) { File.Create(File_test.FullName); }
-            string json = File.ReadAllText(File_test.FullName);
-            return json;
+            //Console.WriteLine("DiskToDatas Start");
+            string json = "";
+            try
+            {
+                json = File.ReadAllText(File_test.FullName);
+            }
+            catch (Exception)
+            {
+            }
+            datas = JsonConvert.DeserializeObject<List<TestData>>(json);
+            if (datas == null) datas = new List<TestData>();
+            //Console.WriteLine("DiskToDatas End");
         }
         private void DatasToDisk()
         {
+            //Console.WriteLine("DatasToDisk Start");
             if (datas != null)
             {
                 string json = JsonConvert.SerializeObject(datas);
                 File.WriteAllText(File_test.FullName, json);
             }
+            //Console.WriteLine("DatasToDisk End");
         }
         /// <summary>
         /// 运行所有测试
@@ -299,7 +311,7 @@ namespace LocalOJ
         /// <returns></returns>
         private async Task RunTestAsync()
         {
-            //Console.WriteLine("RunTest");
+            //Console.WriteLine("RunTest Start");
             if (datas == null)
             {
                 return;
@@ -313,6 +325,8 @@ namespace LocalOJ
                 ps.Add(p);
             }
             await Task.Delay(1000);
+
+
             for (int i = 0; i < tasks.Count; i++)
             {
                 if (tasks[i].IsCompleted)
@@ -332,6 +346,7 @@ namespace LocalOJ
                     datas[i].StatusCode = StatusCodes.TimeOut;
                 }
             }
+
             foreach (var p in ps)//试图关闭超时线程
             {
                 try
@@ -343,8 +358,10 @@ namespace LocalOJ
                 {
                 }
             }
+
             string s = DateTime.Now.ToLocalTime().ToString("MM/dd HH:mm:ss");
-            TbkTestTime.Text = $"Last test time : {s}";
+            Dispatcher.Invoke(() => { TbkTestTime.Text = $"Last test time : {s}"; });
+            //Console.WriteLine("RunTest End");
         }
         /// <summary>
         /// 调用exe文件
@@ -356,6 +373,7 @@ namespace LocalOJ
         private async Task<string> ExecuteAsync(FileInfo path, string input, Process p = null)
         {
             if (p == null) p = new Process();
+            if (input.Length > 0 && input[input.Length - 1] != ' ') input += ' ';
             string output = "";
             await Task.Run(() =>
             {
@@ -374,9 +392,10 @@ namespace LocalOJ
             });
             return output;
         }
-/// <summary>
-/// 用于撤回,储存上一次datas的状态
-/// </summary>
+        /// <summary>
+        /// 用于撤回,储存上一次datas的状态
+        /// </summary>
         private List<TestData> lastDatas = null;
+
     }
 }

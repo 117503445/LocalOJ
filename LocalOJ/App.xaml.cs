@@ -12,7 +12,9 @@ namespace LocalOJ
 
         private void Application_Startup(object sender, StartupEventArgs e)
         {
+#if true
             TLib.Software.WPF_ExpectionHandler.HandleExpection(Current, AppDomain.CurrentDomain);
+#endif
         }
     }
 }
