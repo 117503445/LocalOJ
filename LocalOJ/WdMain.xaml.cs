@@ -1,5 +1,4 @@
-﻿using Newtonsoft.Json;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -7,6 +6,9 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
+using System.Windows.Input;
+using Newtonsoft.Json;
+
 namespace LocalOJ
 {
 
@@ -109,18 +111,6 @@ namespace LocalOJ
             });
 
 
-        }
-        /// <summary>
-        /// 失去焦点时保存更改
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private async void TextBox_LostFocus(object sender, RoutedEventArgs e)
-        {
-            GUIToDatas();
-            DatasToDisk();
-            await RunTestAsync();
-            DatasToGUI();
         }
         /// <summary>
         /// 把文件路径拖入应用窗口
@@ -270,7 +260,6 @@ namespace LocalOJ
                     TextBox tb1 = new TextBox() { TextWrapping = TextWrapping.Wrap, HorizontalContentAlignment = HorizontalAlignment.Center, VerticalContentAlignment = VerticalAlignment.Center, Text = datas[i].ExpectedOutput };
                     TextBox tb2 = new TextBox() { TextWrapping = TextWrapping.Wrap, HorizontalContentAlignment = HorizontalAlignment.Center, VerticalContentAlignment = VerticalAlignment.Center, Text = datas[i].ActualOutput, IsReadOnly = true };
                     TextBox tb3 = new TextBox() { TextWrapping = TextWrapping.Wrap, HorizontalContentAlignment = HorizontalAlignment.Center, VerticalContentAlignment = VerticalAlignment.Center, Text = datas[i].StatusCode.ToString(), IsReadOnly = true };
-                    tb0.LostFocus += TextBox_LostFocus; tb1.LostFocus += TextBox_LostFocus;
                     ug.Children.Add(tb0);
                     ug.Children.Add(tb1);
                     ug.Children.Add(tb2);
@@ -396,6 +385,20 @@ namespace LocalOJ
         /// 用于撤回,储存上一次datas的状态
         /// </summary>
         private List<TestData> lastDatas = null;
-
+        /// <summary>
+        ///  F5 时保存并运行
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private async void Window_PreviewKeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.F5)
+            {
+                GUIToDatas();
+                DatasToDisk();
+                await RunTestAsync();
+                DatasToGUI();
+            }
+        }
     }
 }
