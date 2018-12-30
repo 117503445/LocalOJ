@@ -17,7 +17,7 @@ namespace LocalOJ
     /// </summary>
     public partial class WdMain : Window
     {
-        private FileInfo file_exe = new FileInfo(App.Path_File + "ExampleProgram.exe");
+        private FileInfo file_exe;//= new FileInfo(App.Path_File + "ExampleProgram.exe");
         /// <summary>
         /// exe文件的路径
         /// </summary>
@@ -32,7 +32,7 @@ namespace LocalOJ
                 File_test = new FileInfo(value.Directory.FullName + "\\" + Path.GetFileNameWithoutExtension(value.Name) + ".json");
             }
         }
-        private FileInfo file_test = new FileInfo(App.Path_File + "ExampleProgram.json");
+        private FileInfo file_test;//= new FileInfo(App.Path_File + "ExampleProgram.json");
         /// <summary>
         /// json测试文件的路径
         /// </summary>
@@ -313,6 +313,7 @@ namespace LocalOJ
                 tasks.Add(ExecuteAsync(File_exe, item.Input, p));
                 ps.Add(p);
             }
+            Dispatcher.Invoke(() => { TbkTestTime.Text = "Running!"; });
             await Task.Delay(1000);
 
 
